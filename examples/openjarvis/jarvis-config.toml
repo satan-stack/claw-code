@@ -26,8 +26,11 @@ timeout = 300
 #   xAI:        "grok" | "grok-3-mini"
 #   OpenAI/etc: "openai/gpt-4.1-mini" (with OPENAI_BASE_URL set if not OpenAI direct)
 #   DashScope:  "qwen-plus" | "qwen/qwen-max"
-#   Ollama:     "llama3.2" (with OPENAI_BASE_URL=http://127.0.0.1:11434/v1)
-default_model = "sonnet"
+#   Ollama (recommended for local CPU-only setups):
+#     "openai/qwen2.5-coder:1.5b"  — best speed/quality on CPU (~10s warm)
+#     "openai/llama3.2:3b"         — general-purpose backup
+#     "openai/qwen2.5-coder:7b"    — smarter, ~3-4x slower on CPU
+default_model = "openai/qwen2.5-coder:1.5b"
 
 [engine]
 # Unused by claw_code itself, but Jarvis still resolves an engine for
