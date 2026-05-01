@@ -1,0 +1,46 @@
+# Example ~/.openjarvis/config.toml that drives this repo's `claw` CLI
+# as the OpenJarvis coding agent.
+#
+# Companion to docs/integrations/openjarvis.md. Requires the `claw_code`
+# agent shipped in OpenJarvis branch `claude/setup-jarvis-claw-code-7IWWT`
+# (and any later release that includes it).
+
+[agent]
+default_agent = "claw_code"
+max_turns = 1                       # claw drives its own internal loop
+
+[agent.claw_code]
+# Resolution order: this `binary` key (or the CLAW_BINARY env var)
+# > `claw` on PATH > `<workspace>/rust/target/debug/claw`. Leave the
+# default unless you've installed claw somewhere unusual.
+# binary = "claw"
+# workspace = "."
+permission_mode = "workspace-write"  # read-only | workspace-write | danger-full-access
+allowed_tools = ["read", "glob", "edit"]
+timeout = 300
+# resume = "latest"                  # uncomment to continue the most recent claw session
+
+[intelligence]
+# Any alias or model name claw understands. Examples:
+#   Anthropic:  "opus" | "sonnet" | "haiku" | "claude-sonnet-4-6"
+#   xAI:        "grok" | "grok-3-mini"
+#   OpenAI/etc: "openai/gpt-4.1-mini" (with OPENAI_BASE_URL set if not OpenAI direct)
+#   DashScope:  "qwen-plus" | "qwen/qwen-max"
+#   Ollama:     "llama3.2" (with OPENAI_BASE_URL=http://127.0.0.1:11434/v1)
+default_model = "sonnet"
+
+[engine]
+# Unused by claw_code itself, but Jarvis still resolves an engine for
+# any other agent invoked alongside it (e.g. `morning_digest`).
+default = "ollama"
+
+[tools]
+# claw owns its own tools; leaving Jarvis's tool list empty avoids
+# double-wiring file/shell access through two different harnesses.
+enabled = []
+
+[telemetry]
+enabled = true
+# Per-turn metadata returned by claw (model, usage, session id, cost,
+# finish_reason) lands in AgentResult.metadata and is recorded as a
+# normal Jarvis trace.
