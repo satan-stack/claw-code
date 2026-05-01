@@ -14,7 +14,12 @@ branch `claude/setup-jarvis-claw-code-7IWWT`) wraps **this** repository's
 provider `claw` already speaks (Anthropic direct, xAI, OpenAI-compatible,
 OpenRouter, Ollama, DashScope/Qwen, any Anthropic-compatible local proxy).
 
-This document is the user-facing setup guide for that integration from
+The same branch also adds `claw_smart`, a token-saving router on top of
+`claw_code` that runs `qwen2.5-coder:1.5b` first and only escalates to
+the requested Anthropic model when the local reply trips a quality
+gate. `opus` goes straight to Anthropic (no useful local equivalent).
+
+This document is the user-facing setup guide for the integration from
 the `claw-code` side.
 
 ## At a glance
@@ -116,6 +121,35 @@ calling `claw` directly. Resume one with:
 [agent.claw_code]
 resume = "latest"
 ```
+
+## Token-saving cascade with `claw_smart`
+
+The companion agent `claw_smart` routes Anthropic aliases through a
+local model first, only spending Anthropic tokens on prompts the
+local model can't answer cleanly:
+
+| Asked model | Cascade chain                                       |
+|-------------|-----------------------------------------------------|
+| `haiku`     | `["openai/qwen2.5-coder:1.5b", "haiku"]`            |
+| `sonnet`    | `["openai/qwen2.5-coder:1.5b", "sonnet"]`           |
+| `opus`      | `["opus"]` — always Anthropic.                      |
+| anything    | `[<as-is>]` — pass-through.                         |
+
+```bash
+ollama pull qwen2.5-coder:1.5b
+export OPENAI_BASE_URL="http://127.0.0.1:11434/v1"
+export OPENAI_API_KEY="ollama"
+export ANTHROPIC_API_KEY="sk-ant-..."   # only spent if qwen trips the filter
+
+jarvis ask --agent claw_smart --model sonnet "..."   # qwen first
+jarvis ask --agent claw_smart --model opus   "..."   # Anthropic direct
+```
+
+The winning result's metadata records the cascade trace under
+`claw_smart_chain`, `claw_smart_winner`, and `claw_smart_attempts`,
+so traces show exactly which step answered each turn. Verified live
+on x86 CPU: a 14-token `sonnet` request landed entirely on qwen
+(zero Anthropic tokens spent).
 
 ## How the bridge works
 
